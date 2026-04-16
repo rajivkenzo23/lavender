@@ -3,6 +3,7 @@ const makeWASocket = require('@whiskeysockets/baileys').default;
 const { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const qrcode = require('qrcode-terminal');
+const fs = require('fs');
 const config = require('./config');
 const logger = require('./utils/logger');
 const { loadPlugins } = require('./handlers/pluginLoader');
@@ -11,7 +12,7 @@ const { handleGroupEvents, handleMessageDelete, handleCallEvents } = require('./
 const sessionController = require('./controllers/sessionController');
 
 console.log('╔════════════════════════════════════════╗');
-console.log('║       🌸 LAVENDER BOT STARTING 🌸      ║');
+console.log('║        🌸 LAVENDER BOT STARTING 🌸       ║');
 console.log('╚════════════════════════════════════════╝\n');
 
 // Load plugins
@@ -40,7 +41,7 @@ async function startBot(sessionId = 'main') {
 
     if (qr) {
       console.log('\n╔════════════════════════════════════════╗');
-      console.log('║     📱 SCAN QR CODE WITH WHATSAPP      ║');
+      console.log('║      📱 SCAN QR CODE WITH WHATSAPP       ║');
       console.log('╚════════════════════════════════════════╝\n');
       qrcode.generate(qr, { small: true });
       console.log('\n');
@@ -48,7 +49,10 @@ async function startBot(sessionId = 'main') {
 
     if (connection === 'close') {
       const reason = lastDisconnect?.error?.output?.statusCode;
-      const shouldReconnect = reason !== DisconnectReason.loggedOut;
+
+      // Define fatal errors where the session is no longer valid (Logged Out, Unauthorized, Bad Session)
+      const isFatalAuthError = reason === DisconnectReason.loggedOut || reason === 401 || reason === 405;
+      const shouldReconnect = !isFatalAuthError;
 
       logger.warn(`Connection closed. Reason: ${reason}`);
 
@@ -56,11 +60,19 @@ async function startBot(sessionId = 'main') {
         logger.info('Reconnecting in 5 seconds...');
         setTimeout(() => startBot(sessionId), 5000);
       } else {
-        logger.error('Logged out. Please delete session and restart.');
+        logger.error('Session invalidated or logged out. Clearing corrupted session data...');
+
+        // Auto-delete the corrupted session folder so it doesn't loop forever
+        if (fs.existsSync(sessionPath)) {
+          fs.rmSync(sessionPath, { recursive: true, force: true });
+        }
+
+        logger.info('Session cleared. Restarting to generate a new QR code...');
+        setTimeout(() => startBot(sessionId), 5000);
       }
     } else if (connection === 'open') {
       console.log('\n╔════════════════════════════════════════╗');
-      console.log('║     ✅ BOT CONNECTED SUCCESSFULLY      ║');
+      console.log('║      ✅ BOT CONNECTED SUCCESSFULLY       ║');
       console.log('╚════════════════════════════════════════╝\n');
       logger.info(`🤖 Bot: ${config.botName}`);
       logger.info(`📌 Prefix: ${config.prefix}`);
