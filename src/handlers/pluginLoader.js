@@ -1,44 +1,37 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { logger } from '../utils/logger.js';
+const fs = require('fs');
+const path = require('path');
+const logger = require('../utils/logger');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-export async function loadPlugins() {
+function loadPlugins() {
     const plugins = [];
     const pluginDir = path.join(__dirname, '../plugins');
-    
-    async function loadFromDirectory(dir) {
-        const items = fs.readdirSync(dir);
-        
-        for (const item of items) {
-            const fullPath = path.join(dir, item);
-            const stat = fs.statSync(fullPath);
-            
-            if (stat.isDirectory()) {
-                await loadFromDirectory(fullPath);
-            } else if (item.endsWith('.js')) {
-                try {
-                    const plugin = await import(`file://${fullPath}`);
-                    
-                    if (plugin.default && plugin.default.command) {
-                        plugins.push(plugin.default);
-                        logger.debug(`Loaded plugin: ${plugin.default.command}`);
-                    }
-                } catch (error) {
-                    logger.error(`Failed to load plugin ${item}: ${error.message}`);
-                }
-            }
-        }
+
+    if (!fs.existsSync(pluginDir)) {
+        logger.warn('Plugins directory not found!');
+        return plugins;
     }
-    
-    await loadFromDirectory(pluginDir);
+
+    const files = fs.readdirSync(pluginDir).filter(f => f.endsWith('.js'));
+
+    files.forEach(file => {
+        try {
+            const plugin = require(path.join(pluginDir, file));
+
+            if (plugin.command) {
+                plugins.push(plugin);
+                logger.success(`Loaded: ${file}`);
+            } else {
+                logger.warn(`Invalid plugin: ${file}`);
+            }
+        } catch (error) {
+            logger.error(`Failed to load ${file}: ${error.message}`);
+        }
+    });
+
     return plugins;
 }
 
-export function findPlugin(plugins, command) {
+function findPlugin(plugins, command) {
     return plugins.find(p => {
         if (Array.isArray(p.command)) {
             return p.command.includes(command);
@@ -46,3 +39,22 @@ export function findPlugin(plugins, command) {
         return p.command === command;
     });
 }
+
+function reloadPlugins() {
+    // Clear require cache for plugins
+    const pluginDir = path.join(__dirname, '../plugins');
+
+    Object.keys(require.cache).forEach(key => {
+        if (key.includes(pluginDir)) {
+            delete require.cache[key];
+        }
+    });
+
+    return loadPlugins();
+}
+
+module.exports = {
+    loadPlugins,
+    findPlugin,
+    reloadPlugins
+};

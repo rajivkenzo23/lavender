@@ -1,0 +1,27 @@
+{
+    "commands": {
+        "menu": {
+            "title": "📋 قائمة الأوامر",
+            "description": "الأوامر المتاحة"
+        },
+        "ping": {
+            "response": "🏓 بونج! السرعة: {speed}ms"
+        }
+    },
+    "downloaders": {
+        "processing": "⏳ جاري المعالجة...",
+        "downloading": "📥 جاري التحميل...",
+        "success": "✅ تم!",
+        "error": "❌ خطأ: {error}",
+        "invalidUrl": "رابط غير صالح!"
+    },
+    "sticker": {
+        "processing": "🎨 جاري إنشاء الملصق...",
+        "success": "✅ تم إنشاء الملصق!",
+        "error": "❌ فشل",
+        "noMedia": "رد على صورة/فيديو!"
+    },
+    "admin": {
+        "ownerOnly": "⛔ للمالك فقط!"
+    }
+}

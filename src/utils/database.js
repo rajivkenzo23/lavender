@@ -1,34 +1,18 @@
-import fs from 'fs';
-import mongoose from 'mongoose';
-import { config } from '../config/index.js';
-import { logger } from './logger.js';
+const fs = require('fs');
+const path = require('path');
 
-export class Database {
+class Database {
     constructor() {
-        this.dataDir = './src/data';
-        this.settingsFile = `${this.dataDir}/settings.json`;
-        this.antiDeleteFile = `${this.dataDir}/antidelete.json`;
-        this.useMongoDB = !!config.mongodbUri;
+        this.dataDir = path.join(__dirname, '../data');
+        this.settingsFile = path.join(this.dataDir, 'settings.json');
+        this.antiDeleteFile = path.join(this.dataDir, 'antidelete.json');
+        this.init();
     }
 
-    async init() {
-        if (this.useMongoDB) {
-            try {
-                await mongoose.connect(config.mongodbUri);
-                logger.success('Connected to MongoDB');
-            } catch (error) {
-                logger.error(`MongoDB connection failed: ${error.message}`);
-                logger.info('Falling back to JSON storage');
-                this.useMongoDB = false;
-            }
-        }
-
-        // Ensure data directory exists
+    init() {
         if (!fs.existsSync(this.dataDir)) {
             fs.mkdirSync(this.dataDir, { recursive: true });
         }
-
-        // Initialize JSON files
         if (!fs.existsSync(this.settingsFile)) {
             fs.writeFileSync(this.settingsFile, JSON.stringify({}));
         }
@@ -49,7 +33,6 @@ export class Database {
         fs.writeFileSync(file, JSON.stringify(data, null, 2));
     }
 
-    // Settings
     getSetting(key) {
         const data = this.readJSON(this.settingsFile);
         return data[key];
@@ -61,16 +44,10 @@ export class Database {
         this.writeJSON(this.settingsFile, data);
     }
 
-    // Anti-delete
     saveMessage(messageId, messageData) {
         const data = this.readJSON(this.antiDeleteFile);
-        data[messageId] = {
-            ...messageData,
-            timestamp: Date.now()
-        };
+        data[messageId] = { ...messageData, timestamp: Date.now() };
         this.writeJSON(this.antiDeleteFile, data);
-
-        // Clean old messages (older than 24 hours)
         this.cleanOldMessages();
     }
 
@@ -83,7 +60,7 @@ export class Database {
         const data = this.readJSON(this.antiDeleteFile);
         const now = Date.now();
         const oneDay = 24 * 60 * 60 * 1000;
-        
+
         let cleaned = false;
         Object.keys(data).forEach(key => {
             if (now - data[key].timestamp > oneDay) {
@@ -92,8 +69,8 @@ export class Database {
             }
         });
 
-        if (cleaned) {
-            this.writeJSON(this.antiDeleteFile, data);
-        }
+        if (cleaned) this.writeJSON(this.antiDeleteFile, data);
     }
 }
+
+module.exports = new Database();

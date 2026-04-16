@@ -1,8 +1,8 @@
-import pino from 'pino';
-import { config } from '../config/index.js';
+const pino = require('pino');
+const config = require('../config');
 
 const pinoLogger = pino({
-    level: config.logLevel,
+    level: config.debug ? 'debug' : 'info',
     transport: {
         target: 'pino-pretty',
         options: {
@@ -42,4 +42,4 @@ class Logger {
     }
 }
 
-export const logger = new Logger();
+module.exports = new Logger();

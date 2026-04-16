@@ -1,0 +1,27 @@
+{
+    "commands": {
+        "menu": {
+            "title": "📋 Menú de Comandos",
+            "description": "Comandos disponibles"
+        },
+        "ping": {
+            "response": "🏓 Pong! Velocidad: {speed}ms"
+        }
+    },
+    "downloaders": {
+        "processing": "⏳ Procesando...",
+        "downloading": "📥 Descargando...",
+        "success": "✅ ¡Listo!",
+        "error": "❌ Error: {error}",
+        "invalidUrl": "¡URL inválida!"
+    },
+    "sticker": {
+        "processing": "🎨 Creando sticker...",
+        "success": "✅ ¡Sticker creado!",
+        "error": "❌ Falló",
+        "noMedia": "¡Responde a imagen/video!"
+    },
+    "admin": {
+        "ownerOnly": "⛔ ¡Solo propietario!"
+    }
+}

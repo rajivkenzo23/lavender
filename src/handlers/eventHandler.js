@@ -1,95 +1,69 @@
-import { config } from '../config/index.js';
-import { lang } from '../config/language.js';
-import { logger } from '../utils/logger.js';
-import { Database } from '../utils/database.js';
+const config = require('../config');
+const logger = require('../utils/logger');
+const database = require('../utils/database');
 
-const db = new Database();
-
-export async function handleEvents(sock, event, type) {
+async function handleGroupEvents(sock, event) {
     try {
-        switch (type) {
-            case 'group-participants':
-                await handleGroupParticipants(sock, event);
-                break;
-            case 'message-delete':
-                await handleMessageDelete(sock, event);
-                break;
-            default:
-                break;
-        }
-    } catch (error) {
-        logger.error(`Event handler error: ${error.message}`);
-    }
-}
+        const { id, participants, action } = event;
 
-async function handleGroupParticipants(sock, event) {
-    const { id, participants, action } = event;
-    
-    if (!config.welcomeMessage && !config.goodbyeMessage) return;
-    
-    try {
+        if (!config.welcomeMessage && !config.goodbyeMessage) return;
+
         const groupMetadata = await sock.groupMetadata(id);
-        
+
         for (const participant of participants) {
             const name = participant.split('@')[0];
-            
+
             if (action === 'add' && config.welcomeMessage) {
-                const welcomeText = lang.format('group.welcome', {
-                    user: `@${name}`,
-                    message: groupMetadata.subject
-                });
-                
+                const welcomeText = `👋 *Welcome to ${groupMetadata.subject}!*\n\n` +
+                    `Hello @${name}! 🎉\n\n` +
+                    `Enjoy your stay and read the group rules!`;
+
                 await sock.sendMessage(id, {
                     text: welcomeText,
                     mentions: [participant]
                 });
-                
+
                 logger.info(`Welcome message sent to ${name} in ${groupMetadata.subject}`);
-            } else if ((action === 'remove' || action === 'leave') && config.goodbyeMessage) {
-                const goodbyeText = lang.format('group.goodbye', {
-                    user: `@${name}`,
-                    message: 'Thank you for being part of this group!'
-                });
-                
+            }
+            else if ((action === 'remove' || action === 'leave') && config.goodbyeMessage) {
+                const goodbyeText = `👋 *Goodbye!*\n\n` +
+                    `@${name} has left the group.\n\n` +
+                    `Thank you for being part of *${groupMetadata.subject}*!`;
+
                 await sock.sendMessage(id, {
                     text: goodbyeText,
                     mentions: [participant]
                 });
-                
+
                 logger.info(`Goodbye message sent for ${name} in ${groupMetadata.subject}`);
             }
         }
     } catch (error) {
-        logger.error(`Group participant handler error: ${error.message}`);
+        logger.error(`Group event error: ${error.message}`);
     }
 }
 
 async function handleMessageDelete(sock, event) {
     if (!config.antiDelete) return;
-    
+
     try {
         const deletedMessages = event.keys || [];
-        
+
         for (const key of deletedMessages) {
-            const deleted = await db.getDeletedMessage(key.id);
-            
+            const deleted = database.getDeletedMessage(key.id);
+
             if (deleted) {
                 const from = key.remoteJid;
                 const messageInfo = `*🔴 ANTI-DELETE MESSAGE*\n\n` +
                     `*From:* @${deleted.sender.split('@')[0]}\n` +
                     `*Deleted at:* ${new Date().toLocaleString()}\n\n` +
                     `*Message:* ${deleted.message}`;
-                
+
                 await sock.sendMessage(from, {
                     text: messageInfo,
                     mentions: [deleted.sender]
                 });
-                
-                // If there was media, resend it
-                if (deleted.media) {
-                    // Implementation depends on your storage strategy
-                }
-                
+
                 logger.info(`Anti-delete triggered for message from ${deleted.sender}`);
             }
         }
@@ -97,3 +71,29 @@ async function handleMessageDelete(sock, event) {
         logger.error(`Message delete handler error: ${error.message}`);
     }
 }
+
+async function handleCallEvents(sock, calls) {
+    if (!config.autoRejectCalls) return;
+
+    try {
+        for (const call of calls) {
+            if (call.status === 'offer') {
+                await sock.rejectCall(call.id, call.from);
+                logger.info(`Rejected call from ${call.from}`);
+
+                // Notify caller
+                await sock.sendMessage(call.from, {
+                    text: '📵 *Auto Call Reject*\n\nSorry, this bot automatically rejects all calls.\nPlease send a text message instead.'
+                });
+            }
+        }
+    } catch (error) {
+        logger.error(`Call event error: ${error.message}`);
+    }
+}
+
+module.exports = {
+    handleGroupEvents,
+    handleMessageDelete,
+    handleCallEvents
+};

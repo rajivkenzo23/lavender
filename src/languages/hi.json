@@ -1,0 +1,27 @@
+{
+    "commands": {
+        "menu": {
+            "title": "📋 कमांड मेनू",
+            "description": "उपलब्ध कमांड"
+        },
+        "ping": {
+            "response": "🏓 पोंग! स्पीड: {speed}ms"
+        }
+    },
+    "downloaders": {
+        "processing": "⏳ प्रोसेस हो रहा है...",
+        "downloading": "📥 डाउनलोड हो रहा है...",
+        "success": "✅ हो गया!",
+        "error": "❌ एरर: {error}",
+        "invalidUrl": "अमान्य URL!"
+    },
+    "sticker": {
+        "processing": "🎨 स्टिकर बना रहे हैं...",
+        "success": "✅ स्टिकर बन गया!",
+        "error": "❌ विफल",
+        "noMedia": "इमेज/वीडियो का जवाब दें!"
+    },
+    "admin": {
+        "ownerOnly": "⛔ केवल मालिक!"
+    }
+}

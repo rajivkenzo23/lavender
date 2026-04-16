@@ -1,0 +1,37 @@
+{
+    "commands": {
+        "menu": {
+            "title": "📋 Command Menu",
+            "description": "Available commands"
+        },
+        "ping": {
+            "response": "🏓 Pong! Speed: {speed}ms"
+        }
+    },
+    "downloaders": {
+        "processing": "⏳ Processing...",
+        "downloading": "📥 Downloading...",
+        "success": "✅ Done!",
+        "error": "❌ Error: {error}",
+        "invalidUrl": "Invalid URL!"
+    },
+    "sticker": {
+        "processing": "🎨 Creating sticker...",
+        "success": "✅ Sticker created!",
+        "error": "❌ Failed",
+        "noMedia": "Reply to image/video!"
+    },
+    "group": {
+        "welcome": "👋 Welcome {user}!",
+        "goodbye": "👋 Goodbye {user}!",
+        "notGroup": "Group only!",
+        "notAdmin": "Admin only!"
+    },
+    "admin": {
+        "ownerOnly": "⛔ Owner only!"
+    },
+    "errors": {
+        "general": "An error occurred!",
+        "permissionDenied": "Permission denied!"
+    }
+}
