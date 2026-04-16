@@ -2,6 +2,7 @@ require('dotenv').config();
 const makeWASocket = require('@whiskeysockets/baileys').default;
 const { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const pino = require('pino');
+const qrcode = require('qrcode-terminal');
 const config = require('./config');
 const logger = require('./utils/logger');
 const { loadPlugins } = require('./handlers/pluginLoader');
@@ -26,7 +27,6 @@ async function startBot(sessionId = 'main') {
   const sock = makeWASocket({
     version,
     logger: pino({ level: 'silent' }),
-    printQRInTerminal: true,
     auth: state,
     browser: ['Lavender Bot', 'Chrome', '128.0.0'],
     markOnlineOnConnect: true,
@@ -39,7 +39,11 @@ async function startBot(sessionId = 'main') {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      console.log('\n📱 SCAN THE QR CODE ABOVE TO LOGIN\n');
+      console.log('\n╔════════════════════════════════════════╗');
+      console.log('║     📱 SCAN QR CODE WITH WHATSAPP      ║');
+      console.log('╚════════════════════════════════════════╝\n');
+      qrcode.generate(qr, { small: true });
+      console.log('\n');
     }
 
     if (connection === 'close') {
@@ -55,14 +59,14 @@ async function startBot(sessionId = 'main') {
         logger.error('Logged out. Please delete session and restart.');
       }
     } else if (connection === 'open') {
-      logger.success('╔════════════════════════════════════════╗');
-      logger.success('║     ✅ BOT CONNECTED SUCCESSFULLY      ║');
-      logger.success('╚════════════════════════════════════════╝');
-      logger.info(`\n🤖 Bot: ${config.botName}`);
+      console.log('\n╔════════════════════════════════════════╗');
+      console.log('║     ✅ BOT CONNECTED SUCCESSFULLY      ║');
+      console.log('╚════════════════════════════════════════╝\n');
+      logger.info(`🤖 Bot: ${config.botName}`);
       logger.info(`📌 Prefix: ${config.prefix}`);
       logger.info(`👤 Owner: ${config.ownerNumber}`);
       logger.info(`📱 Session: ${sessionId}`);
-      logger.info(`\n✨ Bot is ready!\n`);
+      logger.success(`\n✨ Bot is ready to receive commands!\n`);
 
       sessionController.setSession(sessionId, sock);
     }
@@ -94,5 +98,17 @@ async function startBot(sessionId = 'main') {
 // Start bot
 startBot().catch(err => {
   logger.error(`Fatal error: ${err.message}`);
+  console.error(err);
   process.exit(1);
+});
+
+// Handle graceful shutdown
+process.on('SIGINT', () => {
+  logger.info('Shutting down gracefully...');
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  logger.info('Terminating...');
+  process.exit(0);
 });
