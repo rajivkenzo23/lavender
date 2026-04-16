@@ -1,43 +1,36 @@
-const pino = require('pino');
 const config = require('../config');
 
-const pinoLogger = pino({
-    level: config.debug ? 'debug' : 'info',
-    transport: {
-        target: 'pino-pretty',
-        options: {
-            colorize: true,
-            translateTime: 'SYS:standard',
-            ignore: 'pid,hostname'
-        }
-    }
-});
-
 class Logger {
+    constructor() {
+        this.colors = {
+            reset: '\x1b[0m',
+            cyan: '\x1b[36m',
+            green: '\x1b[32m',
+            yellow: '\x1b[33m',
+            red: '\x1b[31m',
+            magenta: '\x1b[35m'
+        };
+    }
+
     info(message) {
-        console.log(`\x1b[36m[INFO]\x1b[0m ${message}`);
-        pinoLogger.info(message);
+        console.log(`${this.colors.cyan}[INFO]${this.colors.reset} ${message}`);
     }
 
     success(message) {
-        console.log(`\x1b[32m[SUCCESS]\x1b[0m ${message}`);
-        pinoLogger.info(message);
+        console.log(`${this.colors.green}[SUCCESS]${this.colors.reset} ${message}`);
     }
 
     warn(message) {
-        console.log(`\x1b[33m[WARN]\x1b[0m ${message}`);
-        pinoLogger.warn(message);
+        console.log(`${this.colors.yellow}[WARN]${this.colors.reset} ${message}`);
     }
 
     error(message) {
-        console.log(`\x1b[31m[ERROR]\x1b[0m ${message}`);
-        pinoLogger.error(message);
+        console.log(`${this.colors.red}[ERROR]${this.colors.reset} ${message}`);
     }
 
     debug(message) {
         if (config.debug) {
-            console.log(`\x1b[35m[DEBUG]\x1b[0m ${message}`);
-            pinoLogger.debug(message);
+            console.log(`${this.colors.magenta}[DEBUG]${this.colors.reset} ${message}`);
         }
     }
 }
