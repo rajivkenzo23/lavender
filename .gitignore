@@ -1,0 +1,11 @@
+node_modules/
+.env
+package-lock.json
+src/sessions/*
+!src/sessions/.gitkeep
+src/data/*.json
+!src/data/.gitkeep
+temp/*
+!temp/.gitkeep
+*.log
+.DS_Store
